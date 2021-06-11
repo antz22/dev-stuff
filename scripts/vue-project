@@ -1,0 +1,31 @@
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+yellow=`tput setaf 3`
+blue=`tput setaf 4`
+purple=`tput setaf 5`
+cyan=`tput setaf 6`
+
+PROJECT_NAME=$1
+
+echo "${yellow}>>> Creating vue project${reset}"
+vue create $PROJECT_NAME
+cd $PROJECT_NAME
+echo "${cyan}>>> Installing vue project dependencies${reset}"
+npm install > /dev/null
+npm install axios > /dev/null
+npm install --save-dev @fortawesome/fontawesome-free > /dev/null
+
+cd src
+sed -i "/import App/a\import axios from 'axios'" main.js
+sed -i "/createApp(App)/i\const DEV_URL = 'http://0.0.0.0:5000'\naxios.defaults.baseURL = DEV_URL\n\nimport '@fortawesome/fontawesome-free/css/all.css'\nimport '@fortawesome/fontawesome-free/js/all.js'\nimport './assets/index.css'\n" main.js
+# finding first occurrence (from end of line) of ').m' (for .use(router).mount), and adding in ,axios
+sed -i "/createApp(App)/ s/^\(.*\)\().m\)/\1, axios\2/" main.js
+
+touch assets/index.css
+rm -rf assets/logo.png
+
+# PROJECT_NAME
+cd ..
+
+echo "${green}>>> Completed successfully. Make sure to save changes, have fun!${reset}"

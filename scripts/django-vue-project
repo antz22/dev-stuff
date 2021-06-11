@@ -1,0 +1,82 @@
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+yellow=`tput setaf 3`
+blue=`tput setaf 4`
+purple=`tput setaf 5`
+cyan=`tput setaf 6`
+
+PROJECT_NAME=$1
+DJANGO_APP_NAME=$2
+
+echo "${blue}>>> creating project folder${reset}"
+mkdir $PROJECT_NAME
+cd $PROJECT_NAME
+
+echo "${cyan}>>> activating virtual environment and installing dependencies...${reset}"
+virtualenv .venv > /dev/null
+source .venv/bin/activate
+
+pip install django django-rest-framework django-cors-headers djoser pillow stripe > /dev/null
+
+echo "${purple}>>> Creating and editing django project and django app${reset}"
+# Create project and cd into the settings folder
+django-admin startproject django_$PROJECT_NAME
+# PROJECT_NAME/django_PROJECT_NAME
+cd django_$PROJECT_NAME
+
+# so as not to give errors in settings.py
+python manage.py startapp $DJANGO_APP_NAME
+
+# PROJECT_NAME/django_PROJECT_NAME/django_PROJECT_NAME
+cd django_$PROJECT_NAME
+
+# settings.py - add api, authentication, security tings
+sed -i "/django.contrib.staticfiles/a\    'rest_framework',\n    'rest_framework.authtoken',\n    'corsheaders',\n    'djoser',\n    '${DJANGO_APP_NAME}'," settings.py
+sed -i "/django.middleware.security/i\    'corsheaders.middleware.CorsMiddleware'," settings.py
+sed -i "/MIDDLEWARE/i\CORS_ALLOWED_ORIGINS = [\"http://localhost:8080\"]\n\nCORS_ORIGIN_WHITELIST = [\"http://localhost:8080\"]\n" settings.py
+sed -i "/WSGI_APPLICATION/a\  \nAUTH_USER_MODEL = '${DJANGO_APP_NAME}.User'" settings.py
+# urls.py - set up api urls and app
+sed -i "1,15d" urls.py
+sed -i "/import path/s/$/, include/" urls.py
+sed -i "/admin.site.urls/a\    path('api/v1/', include('djoser.urls')),\n    path('api/v1/', include('djoser.urls.authtoken')),\n    path('api/v1/', include('${DJANGO_APP_NAME}.urls'))," urls.py
+
+# PROJECT_NAME/django_PROJECT_NAME/DJANGO_APP_NAME
+cd ../$DJANGO_APP_NAME
+
+touch serializers.py
+touch urls.py
+echo -e "from django.urls import path, include\n\nfrom ${DJANGO_APP_NAME} import views\n\nurlpatterns = []" >> urls.py
+sed -i "3d" models.py
+sed -i "/import models/a\class User(AbstractUser):\n    pass" models.py
+sed -i "/import models/i\from django.contrib.auth.models import AbstractUser" models.py
+
+# PROJECT_NAME/django_PROJECT_NAME
+cd ..
+python manage.py makemigrations
+python manage.py migrate
+
+# PROJECT_NAME
+cd ..
+
+echo "${yellow}>>> Creating vue project${reset}"
+vue create vue_$PROJECT_NAME
+cd vue_$PROJECT_NAME
+echo "${cyan}>>> Installing vue project dependencies${reset}"
+npm install > /dev/null
+npm install axios > /dev/null
+npm install --save-dev @fortawesome/fontawesome-free > /dev/null
+
+cd src
+sed -i "/import App/a\import axios from 'axios'" main.js
+sed -i "/createApp(App)/i\const DEV_URL = 'http://0.0.0.0:5000'\naxios.defaults.baseURL = DEV_URL\n\nimport '@fortawesome/fontawesome-free/css/all.css'\nimport '@fortawesome/fontawesome-free/js/all.js'\nimport './assets/index.css'\n" main.js
+# finding first occurrence (from end of line) of ').m' (for .use(router).mount), and adding in ,axios
+sed -i "/createApp(App)/ s/^\(.*\)\().m\)/\1, axios\2/" main.js
+
+touch assets/index.css
+rm -rf assets/logo.png
+
+# PROJECT_NAME
+cd ..
+
+echo "${green}>>> Completed successfully. Make sure to save changes, have fun!${reset}"

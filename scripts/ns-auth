@@ -1,0 +1,4 @@
+# called on in the source directory of the nativescript-vue project
+
+rm -rf ./store/index.js 
+cp -r ~/Repos/dev-stuff/templates/ns/index.js ./store/index.js

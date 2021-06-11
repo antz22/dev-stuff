@@ -1,0 +1,7 @@
+# called on in the source directory of the nativescript-vue project
+
+cp -r ~/Repos/dev-stuff/templates/vue/Login.vue ./views/Login.vue
+cp -r ~/Repos/dev-stuff/templates/vue/SignUp.vue ./views/SignUp.vue
+
+rm -rf ./store/index.js 
+cp -r ~/Repos/dev-stuff/templates/vue/index.js ./store/index.js

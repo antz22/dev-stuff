@@ -1,0 +1,37 @@
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+yellow=`tput setaf 3`
+blue=`tput setaf 4`
+purple=`tput setaf 5`
+cyan=`tput setaf 6`
+
+PROJECT_NAME=$1
+
+echo "${yellow}>>> Creating vue project${reset}"
+vue init nativescript-vue/vue-cli-template $PROJECT_NAME
+cd $PROJECT_NAME
+echo "${cyan}>>> Installing vue project dependencies${reset}"
+npm install > /dev/null
+npm install axios > /dev/null
+
+cd src
+sed -i "s/components/views/" main.js
+sed -i "/import App/a\import axios from 'axios'" main.js
+sed -i "/new Vue/i\const DEV_URL = 'http://10.0.2.2:5000'\naxios.defaults.baseURL = DEV_URL\n\n" main.js
+
+mkdir store
+mv store.js index.js
+mv index.js ./store
+
+mkdir views
+mv ./components/App.vue ./views
+
+rm -rf ./assets/images
+cp -r ~/Downloads/fonts/* ./fonts 
+sed -i "/see/a\\.far {\n    font-family: Font Awesome 5 Free, fa-regular-400;\n    font-weight: 400;\n}\n\n\.fab {\n    font-family: Font Awesome 5 Free, fa-brands-400;\n    font-weight: 400;\n}\n\n\.fas {\n    font-family: Font Awesome 5 Free, fa-solid-900;\n    font-weight: 400;\n}" app.scss
+
+# PROJECT_NAME
+cd ..
+
+echo "${green}>>> Completed successfully. Make sure to save changes, have fun!${reset}"
