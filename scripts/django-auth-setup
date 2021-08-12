@@ -1,0 +1,42 @@
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+yellow=`tput setaf 3`
+blue=`tput setaf 4`
+purple=`tput setaf 5`
+cyan=`tput setaf 6`
+
+PROJECT_NAME=$1
+
+echo "${blue}>>> creating project folder${reset}"
+
+git clone https://github.com/antz22/django-auth-template.git > /dev/null
+mv django-auth-template/project_name $PROJECT_NAME
+rm -rf django-auth-template
+cd $PROJECT_NAME
+mv project_name $PROJECT_NAME
+
+sed -i "s/ROOT_URLCONF = 'project_name.urls'/ROOT_URLCONF = '$PROJECT_NAME.urls'/g" $PROJECT_NAME/settings.py
+sed -i "s/WSGI_APPLICATION = 'project_name.wsgi.application'/WSGI_APPLICATION = '$PROJECT_NAME.wsgi.application'/g" $PROJECT_NAME/settings.py
+sed -i "s/os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_name.settings')/os.environ.setdefault('DJANGO_SETTINGS_MODULE', '$PROJECT_NAME.settings')/g" $PROJECT_NAME/wsgi.py
+sed -i "s/os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_name.settings')/os.environ.setdefault('DJANGO_SETTINGS_MODULE', '$PROJECT_NAME.settings')/g" manage.py
+
+
+echo "${purple}>>> creating virtual environment and installing dependencies...${reset}"
+virtualenv .venv > /dev/null
+source .venv/bin/activate > /dev/null
+pip install -r requirements.txt > /dev/null
+
+
+
+echo "${yellow}>>> initializing django database${reset}"
+python manage.py makemigrations
+python manage.py migrate
+echo "${cyan}>>> creating django superuser${reset}"
+python manage.py createsuperuser
+
+
+
+echo "${green}>>> Success! running test server...${reset}"
+python manage.py runserver
