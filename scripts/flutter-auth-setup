@@ -1,0 +1,50 @@
+
+red=`tput setaf 1`
+green=`tput setaf 2`
+reset=`tput sgr0`
+yellow=`tput setaf 3`
+blue=`tput setaf 4`
+purple=`tput setaf 5`
+cyan=`tput setaf 6`
+
+ORG=$1
+PROJECT_NAME=$2
+
+echo "${blue}>>> creating project folder${reset}"
+
+flutter create --org=$ORG --project-name=$PROJECT_NAME $PROJECT_NAME
+
+cd $PROJECT_NAME
+
+
+echo "${cyan}>>> moving lib template code into project folder${reset}"
+
+mkdir assets
+cd assets
+mkdir images
+mkdir svgs
+cd ..
+
+rm -rf lib
+git clone https://github.com/antz22/flutter-auth-template.git > /dev/null
+mv flutter-auth-template/lib lib
+rm -rf pubspec.yaml
+mv flutter-auth-template/pubspec.yaml pubspec.yaml
+mv flutter-auth-template/logo.svg assets/svgs/logo.svg
+mv flutter-auth-template/logo.png assets/images/logo.png
+
+rm -rf flutter-auth-template
+
+
+
+
+echo "${purple}>>> renaming package name references in template code${reset}"
+
+cd lib
+find . -type f -exec sed -i "s/project_name/$PROJECT_NAME/g" {} \;
+cd ..
+sed -i "s/project_name/$PROJECT_NAME/g" pubspec.yaml
+
+flutter pub get
+
+echo "${green}>>> Success!${reset}"
